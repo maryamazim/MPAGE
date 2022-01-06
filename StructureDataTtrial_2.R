@@ -31,11 +31,12 @@ for(i in 2:ncol(odData)) {
   odDF <- rbind(odDF, df)
 }
 names(odDF)[5] <- 'growth'
+illumDF$growth <- odDF$growth
 
 # Look at data using poly()
 # illum data
 illumDF$type <- factor(illumDF$type)[,drop=T]
-illumDF.poly <- lm(illumination ~ -1 + type + replicate + temperature + poly(time, 7), 
+illumDF.poly <- lm(illumination ~ -1 + type + temperature + poly(time, 7), 
                    data = illumDF[!is.element(illumDF$type, c('LB', 'WT')),])
 summary(illumDF.poly)
 newD <- illumDF[!is.element(illumDF$type, c('LB', 'WT')),]
@@ -46,22 +47,21 @@ newD$pred <- predict(illumDF.poly, newdata=newD)
 
 # OD data
 odDF$type <- factor(odDF$type)[,drop=T]
-odDF.poly <- lm(growth ~ -1 + type + replicate + temperature + poly(time, 5), 
+odDF.poly <- lm(growth ~ -1 + type + temperature + poly(time, 5), 
                 data = odDF[!is.element(odDF$type, c('LB', 'WT')),])
 summary(odDF.poly)
 
 # adjust illumination for growth - GFP replicates and becomes more intense with greater cell density.
 # It is imarative to adjust for the part of illumination that comes from growth so that what remains
 # is related only to quorum sensing activity.
-illumDF$growth <- odDF$growth
 illumDF$type <- factor(illumDF$type)[,drop=T]
-illumDF.poly <- lm(illumination ~ -1 + type + poly(growth,3) + replicate + temperature + poly(time,7), 
+illumDF.poly <- lm(illumination ~ -1 + type + poly(growth,3) + temperature + poly(time,7), 
                    data = illumDF[!is.element(illumDF$type, c('LB', 'WT')),])
 summary(illumDF.poly)
 
 newD$pred_odAdj <- predict(illumDF.poly, newdata=newD)
 plot(newD$time, newD$illumination)  # not adjusted for anything
-plot(newD$time, newD$pred)  # Not adjusted for OD
+plot(newD$time, newD$pred)  # Not adjusted for OD (type, temp, poly)
 plot(newD$time, newD$pred_odAdj)  # adjusted for everything, including OD
 
 
